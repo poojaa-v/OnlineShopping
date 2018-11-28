@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import io.online.customer.domain.Customer;
 import io.online.customer.repository.CustomerDetailsRepository;
 
@@ -20,7 +20,11 @@ public class CustomerDetailsController {
 
 	@Autowired
 	private CustomerDetailsRepository customerDetailsRepository;
-
+	
+	@Autowired
+	private RabbitTemplate template;
+	
+		
 	//	@Autowired
 	//	public CustomerDetailsController (CustomerDetailsRepository customerDetailsRepository) {
 	//		this.customerDetailsRepository = customerDetailsRepository;		
@@ -36,6 +40,16 @@ public class CustomerDetailsController {
     public ResponseEntity<?> add(@RequestBody Customer customer) {
 		System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<Inside getCustomerDetails Controller ADDD>>>>>>>>>>>>>>>>>>>>>");
 		Customer cust = customerDetailsRepository.saveCustDetails(customer);
+		
+		//Rabbit MQ event creation starts
+		String routingKey = "CustomerCreated";
+		String message = "CustomerCreated";
+		// rabbitTemplate.convertAndSend(exchange.getName(), routingKey, message);
+		System.out.println("<<<<<<<<<Inside Service Save function BEFORE Convert and send>>>>>>>>>>");
+		template.convertAndSend(cust);
+		System.out.println("<<<<<<<<<Inside Service Save function AFTER Convert and send>>>>>>>>>>");
+		//Rabbit MQ event creation ends
+		
 		HttpHeaders httpHeaders = null;
         if(cust!= null){
 	        httpHeaders = new HttpHeaders();
